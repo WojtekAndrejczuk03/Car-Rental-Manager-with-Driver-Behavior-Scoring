@@ -49,9 +49,9 @@ Dla każdego wynajmu mamy dane tabelaryczne: moc auta, spalanie katalogowe i rze
 
 ## 6. Dane
 
-- Źródło:
-- Rozmiar / format:
-- Czy dane są już dostępne? Nie — plan pozyskania:
+- Źródło: Cloude AI
+- Rozmiar / format: csv
+- Czy dane są już dostępne? Nie — plan pozyskania: Dostępne
 
 ## 7. Stos technologiczny
 
