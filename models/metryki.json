@@ -1,0 +1,37 @@
+{
+  "model": "regresja logistyczna",
+  "walidacja": "GroupKFold po kierowcy, 5 foldów",
+  "liczba_wynajmow": 3000,
+  "liczba_kierowcow": 598,
+  "odsetek_szkod": 0.0793,
+  "baza_auc": 0.5873,
+  "baza_auc_std": 0.039,
+  "model_auc": 0.7261,
+  "model_auc_std": 0.0395,
+  "przewaga_nad_baza": 0.1388,
+  "spearman_wynajmy": 0.6141,
+  "spearman_kierowcy": 0.8034,
+  "kryteria": {
+    "model_auc >= 0.7": true,
+    "przewaga_nad_baza >= 0.08": true,
+    "spearman_kierowcy >= 0.7": true
+  },
+  "wspolczynniki": {
+    "obszar_jazdy_autostrada": -1.8817,
+    "obszar_jazdy_miasto": 0.8881,
+    "typ_samochodu_sportowy": 0.6715,
+    "obszar_jazdy_trasa": 0.5979,
+    "stosunek_spalania": 0.573,
+    "log_km_razem": 0.5126,
+    "typ_samochodu_kombi": -0.5119,
+    "srednia_predkosc_kmh": 0.5043,
+    "najwyzsza_predkosc_kmh": 0.4841,
+    "obszar_jazdy_mieszany": 0.355,
+    "typ_samochodu_SUV": -0.2162,
+    "liczba_koni_mechanicznych": -0.2105,
+    "typ_samochodu_miejski": 0.1256,
+    "przyspieszenia_na_100km": 0.0759,
+    "typ_samochodu_offroad": -0.0653,
+    "typ_samochodu_osobowy": -0.0443
+  }
+}
