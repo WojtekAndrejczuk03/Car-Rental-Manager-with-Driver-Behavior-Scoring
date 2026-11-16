@@ -12,6 +12,7 @@ venv/
 
 # Pliki generowane przez projekt (odtwarzane skryptami)
 *.db
+*.sqlite3
 models/*.joblib
 
 # Sekrety
