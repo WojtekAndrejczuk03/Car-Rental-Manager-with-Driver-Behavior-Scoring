@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Środowisko wirtualne
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Pliki generowane przez projekt (odtwarzane skryptami)
+*.db
+models/*.joblib
+
+# Sekrety
+.env
+
+# System i edytory
+.DS_Store
+.vscode/
+.idea/
