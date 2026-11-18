@@ -1,7 +1,7 @@
 @echo off
 rem Uruchamia caly system od zera na Windowsie: srodowisko, baza, model, API z panelem.
-rem Uzycie: dwuklik na run.bat albo w terminalu:  run.bat
-rem Inny port:  set PORT=8080 ^& run.bat
+rem Uzycie: dwuklik na run.bat albo w PowerShellu:  .\run.bat
+rem Inny port w PowerShellu:  $env:PORT=8080; .\run.bat
 setlocal
 cd /d "%~dp0"
 set PYTHONUTF8=1

@@ -21,6 +21,20 @@ Więcej informacji znajduje się w [data/README.md](data/README.md).
 - Python 3.9 lub nowszy
 - Dostęp do internetu podczas pierwszego otwarcia panelu (Vue jest ładowane z CDN)
 
+## Szybki start
+
+Jedna komenda tworzy środowisko, importuje dane do bazy, uczy model i startuje
+API z panelem:
+
+- **Windows:** dwuklik na `run.bat` albo w PowerShellu `.\run.bat`
+- **macOS / Linux:** `./run.sh`
+
+Pierwsze uruchomienie trwa 1–2 minuty, bo instaluje biblioteki. Potem otwórz
+<http://127.0.0.1:8000/>. Serwer zatrzymasz klawiszami Ctrl+C. Gdy port 8000 jest
+zajęty: `$env:PORT=8080; .\run.bat` (PowerShell) albo `PORT=8080 ./run.sh`.
+
+Te same kroki można wykonać ręcznie, jak opisano niżej.
+
 ## Uruchomienie w Windows (PowerShell)
 
 W katalogu głównym repozytorium wykonaj:
