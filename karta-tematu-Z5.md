@@ -7,8 +7,8 @@ Sztuczna inteligencja — laboratorium · Collegium Da Vinci · rok akad. 2026/2
 
 | Imię i nazwisko | Nr albumu | Rola (wstępna) |
 |---|---|---|
-| Wojciech Andrejczuk | 29202 | CEO |
-| Błażej Kłoda | 31132 | Szeregowy |
+| Wojciech Andrejczuk | 29202 | Model ML i API, koordynacja zespołu |
+| Błażej Kłoda | 31132 | Baza danych i panel zarządcy (frontend) |
 
 ## 2. Roboczy tytuł (PL)
 
@@ -49,13 +49,13 @@ Dla każdego wynajmu mamy dane tabelaryczne: moc auta, spalanie katalogowe i rze
 
 ## 6. Dane
 
-- Źródło: Cloude AI
-- Rozmiar / format: csv
-- Czy dane są już dostępne? Nie — plan pozyskania: Dostępne
+- Źródło: dane syntetyczne z własnego generatora `scripts/generate_dataset.py` (opis w `data/README.md`). Prawdziwych danych z wypożyczalni, które łączyłyby dane o jeździe ze szkodami, nie udało się pozyskać (zob. punkt 12).
+- Rozmiar / format: CSV, 3000 wynajmów, 598 kierowców, 15 kolumn (`data/wynajmy.csv`) oraz plik walidacyjny z ukrytą agresywnością kierowców (`data/walidacja_agresywnosc.csv`, nieużywany do uczenia).
+- Czy dane są już dostępne? Tak — są w repozytorium i można je odtworzyć poleceniem `python3 scripts/generate_dataset.py --wynajmy 3000 --seed 42`.
 
 ## 7. Stos technologiczny
 
-Model: Python, pandas, scikit-learn. Backend: FastAPI (API udostępniające prognozy i dane o wypożyczeniach), baza SQLite. Frontend: aplikacja jednostronicowa (SPA) w JavaScript (React lub Vue).
+Model: Python, pandas, scikit-learn. Backend: FastAPI (API udostępniające prognozy i dane o wypożyczeniach), baza SQLite. Frontend: aplikacja jednostronicowa (SPA) w JavaScript (Vue 3).
 
 ## 8. Kryterium sukcesu
 
