@@ -1,0 +1,4 @@
+# Końce linii: skrypty Windows muszą mieć CRLF, skrypty bash muszą mieć LF,
+# niezależnie od ustawień gita na komputerze (core.autocrlf).
+*.bat text eol=crlf
+*.sh  text eol=lf
