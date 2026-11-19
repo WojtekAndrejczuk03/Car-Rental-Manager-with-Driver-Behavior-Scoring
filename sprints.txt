@@ -1,0 +1,82 @@
+=== Sprint 5.11 ===
+
+Zobowiązanie z poprzednich zajęć: tak – zrobione
+
+
+
+[Błażej Kłoda]
+
+Zrobiłem/zrobiłam:
+- Listę parametrów branych pod uwagę w dataset
+- Plik wczytywanie.ipynb
+
+Na następne zajęcia zrobię: ...
+
+
+
+[Wojciech Andrejczuk]
+
+Zrobiłem/zrobiłam:
+- Plik generate_dataset.py, który generuje sztucznie utworzony dataset
+- Uzupełniłem kartę tematu
+
+Na następne zajęcia zrobię: ...
+
+
+
+Blokuje nas: nic
+
+Zobowiązanie zespołu na następne zajęcia: Finalizacja projektu
+
+
+
+=== Sprint 19.11 ===
+
+Zobowiązanie z poprzednich zajęć: tak – zrobione
+
+
+
+[Błażej Kłoda]
+
+Zrobiłem/zrobiłam:
+- Dodałem bazę SQLite i zimportowałem do niej wynajmy z CSV
+- Dodałem szkielet strony w pliku frontend/index.html
+- Połączyłem panel z API
+- Uzupełniłem plik README.md
+
+Na następne zajęcia zrobię: ...
+
+
+
+[Wojciech Andrejczuk]
+
+Zrobiłem/zrobiłam:
+- Dodałem plik requirements.txt z bibliotekami projektu i .gitignore
+- Napisałem trening modelu (regresja logistyczna) i porównanie z metodą bazową,
+  walidacja GroupKFold po kierowcach: model ROC AUC 0,73, metoda bazowa 0,59,
+  zgodność oceny z prawdziwą agresywnością (Spearman) 0,80, czyli wszystkie
+  kryteria z karty spełnione
+- Dodałem ocenę kierowcy 0–100, styl jazdy (spokojny / normalny / agresywny)
+  i wycenę wynajmu (stawka bazowa × mnożnik)
+- Napisałem API w FastAPI, które łączy bazę z modelem i daje panelowi dane
+  o kierowcach, historię wynajmów, podsumowanie i wycenę
+- Dodałem skrypty run.sh i run.bat, które jedną komendą uruchamiają cały system
+- Poprawiłem kartę tematu (źródło danych, role) i dodałem szybki start do README
+- Poprawiłem zgodność bazy z Pythonem 3.9
+
+Na następne zajęcia zrobię:
+- Porównanie kilku modeli (regresja logistyczna, las losowy, gradient boosting)
+- Ocenę kierowcy liczoną tylko z cech stylu jazdy, żeby typ auta i obszar jazdy
+  nie wpływały na cenę
+- Import nowych wynajmów z pliku CSV przez API
+- Wyjaśnienie ceny: które cechy jazdy najbardziej podniosły lub obniżyły ocenę
+- Testy oceny, wyceny i API
+- Roboczą dokumentację po polsku
+
+
+
+Blokuje nas: nic
+
+Zobowiązanie zespołu na następne zajęcia: code freeze 26.11 – domknięcie zakresu
+minimalnego z karty (widok aut, import CSV w panelu, historia ocen kierowcy),
+robocza dokumentacja po polsku i po angielsku oraz gotowa prezentacja
