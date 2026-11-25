@@ -82,3 +82,30 @@ z API serwowanego przez FastAPI.
 - `GET /api/kierowcy` — oceny i style jazdy kierowców.
 - `GET /api/kierowcy/{id_kierowcy}` — profil kierowcy i historia wynajmów.
 - `POST /api/wycena` — wycena dla kierowcy i stawki bazowej.
+
+## Ocena kierowcy zależy tylko od stylu jazdy
+
+Model przewiduje szkodę z dwóch grup cech:
+
+- **styl jazdy**: przyspieszenia na 100 km, spalanie względem katalogowego,
+  prędkość średnia i najwyższa. Każdą z tych miar porównujemy z typowym
+  kierowcą w tym samym obszarze, bo 130 km/h na autostradzie to spokojna jazda,
+  a w mieście bardzo agresywna;
+- **kontekst wynajmu**: przebieg, obszar jazdy, typ i moc auta.
+
+Kontekst pomaga przewidzieć szkodę, ale nie powinien zmieniać ceny dla klienta.
+Dlatego ocenę 0–100 liczymy z ryzyka, jakie kierowca miałby przy tym samym
+stylu jazdy w jednakowym, referencyjnym kontekście (ten sam przebieg, obszar
+i auto dla wszystkich). Pole `ryzyko` w API to nadal pełne ryzyko szkody
+w wynajmach kierowcy, a `ryzyko_stylu` i `ocena` opisują tylko jego styl.
+
+Trening (`python -m src.model.train`) zapisuje w `models/metryki.json`
+w sekcji `analizy`:
+
+- wpływ obszaru jazdy na ocenę kierowcy o tej samej prawdziwej agresywności
+  (obecnie ok. 0 pkt; gdyby ocena wynikała z pełnego ryzyka, kierowca jeżdżący
+  tylko po mieście dostawałby ok. +13 pkt, a jeżdżący autostradą ok. −6 pkt),
+- ROC AUC modelu, który zna tylko kontekst wpisany do generatora (0,64), oraz
+  „sufitu”, czyli modelu znającego prawdziwą agresywność (0,76). Model osiąga
+  0,73, więc większość przewagi nad samym kontekstem pochodzi z odczytania
+  stylu jazdy z danych.

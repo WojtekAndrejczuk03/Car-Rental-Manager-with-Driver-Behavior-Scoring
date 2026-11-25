@@ -1,14 +1,19 @@
 """Ocena kierowcy 0–100, styl jazdy i wycena wynajmu.
 
-Model (train.py) zwraca prawdopodobieństwo szkody dla wynajmu. Ten moduł:
-1. liczy ryzyko każdego wynajmu,
+Model (model.py) zwraca dwa ryzyka dla każdego wynajmu:
+- ryzyko wynajmu: prawdopodobieństwo szkody (styl jazdy + przebieg, obszar, auto),
+- ryzyko stylu: to samo, ale w jednakowym kontekście dla wszystkich kierowców.
+Ten moduł:
+1. liczy oba ryzyka dla każdego wynajmu,
 2. uśrednia je po kierowcy,
-3. porównuje ze średnim ryzykiem floty i zamienia na ocenę 0–100,
+3. porównuje ryzyko stylu ze średnim we flocie i zamienia na ocenę 0–100,
 4. z oceny wyznacza styl jazdy i mnożnik ceny.
+Ocena i cena zależą więc tylko od tego, JAK kierowca jeździ, a nie GDZIE
+i CZYM: jazda po mieście albo długi wyjazd autostradą nie obniża oceny.
 
 Wycena to jawna formuła (stawka bazowa × mnożnik), a nie część modelu.
 
-Skala oceny (logarytmiczna względem średniego ryzyka floty):
+Skala oceny (logarytmiczna względem średniego ryzyka stylu we flocie):
     ryzyko = średnia floty       -> 50 pkt
     ryzyko 2× mniejsze           -> 75 pkt
     ryzyko 4× mniejsze lub mniej -> 100 pkt
@@ -22,7 +27,6 @@ Podgląd na danych z data/wynajmy.csv:
 """
 from __future__ import annotations
 
-import json
 import math
 from pathlib import Path
 
@@ -54,14 +58,14 @@ def wczytaj_model(sciezka: Path = PLIK_MODELU):
     return joblib.load(sciezka)
 
 
-def ryzyko_floty(sciezka_metryk: Path = PLIK_METRYK) -> float:
-    """Średnie ryzyko szkody we flocie (odsetek szkód w danych uczących)."""
-    return float(json.loads(Path(sciezka_metryk).read_text(encoding="utf-8"))["odsetek_szkod"])
-
-
 def ryzyko_wynajmow(model, wynajmy: pd.DataFrame) -> np.ndarray:
     """Prawdopodobieństwo szkody dla każdego wynajmu (wiersze jak w data/wynajmy.csv)."""
-    return model.predict_proba(zbuduj_cechy(wynajmy))[:, 1]
+    return model.ryzyko_wynajmu(zbuduj_cechy(wynajmy))
+
+
+def ryzyko_stylu(model, wynajmy: pd.DataFrame) -> np.ndarray:
+    """Ryzyko wynikające tylko ze stylu jazdy: ten sam przebieg, obszar i auto dla wszystkich."""
+    return model.ryzyko_stylu(zbuduj_cechy(wynajmy))
 
 
 def ocena_z_ryzyka(ryzyko: float, srednie_ryzyko: float) -> int:
@@ -81,25 +85,29 @@ def styl_jazdy(ocena: int | None) -> str:
     return "agresywny"
 
 
-def ocen_wynajmy(model, wynajmy: pd.DataFrame, srednie_ryzyko: float) -> pd.DataFrame:
-    """Dodaje do wynajmów kolumny `ryzyko` i `ocena` (historia ocen kierowcy)."""
+def ocen_wynajmy(model, wynajmy: pd.DataFrame) -> pd.DataFrame:
+    """Dodaje do wynajmów kolumny `ryzyko`, `ryzyko_stylu` i `ocena` (historia ocen kierowcy)."""
     wynik = wynajmy.copy()
     wynik["ryzyko"] = ryzyko_wynajmow(model, wynajmy)
-    wynik["ocena"] = [ocena_z_ryzyka(r, srednie_ryzyko) for r in wynik["ryzyko"]]
+    wynik["ryzyko_stylu"] = ryzyko_stylu(model, wynajmy)
+    wynik["ocena"] = [ocena_z_ryzyka(r, model.srednie_ryzyko_stylu) for r in wynik["ryzyko_stylu"]]
     return wynik
 
 
-def ocen_kierowcow(model, wynajmy: pd.DataFrame, srednie_ryzyko: float) -> pd.DataFrame:
-    """Jeden wiersz na kierowcę: liczba wynajmów, średnie ryzyko, ocena, styl i mnożnik.
+def ocen_kierowcow(model, wynajmy: pd.DataFrame) -> pd.DataFrame:
+    """Jeden wiersz na kierowcę: liczba wynajmów, ryzyka, ocena, styl i mnożnik.
 
-    Ocena kierowcy pochodzi ze średniego ryzyka wszystkich jego wynajmów,
-    bo pojedynczy wynajem bywa przypadkowy (zgodność z prawdziwą agresywnością
-    jest wyraźnie wyższa dla średniej niż dla pojedynczego wynajmu).
+    `ryzyko` to średnie przewidywane ryzyko szkody w jego wynajmach (z kontekstem),
+    a ocena pochodzi ze średniego ryzyka stylu, bo pojedynczy wynajem bywa
+    przypadkowy (zgodność z prawdziwą agresywnością jest wyraźnie wyższa dla
+    średniej niż dla pojedynczego wynajmu).
     """
-    t = wynajmy[["id_kierowcy"]].assign(ryzyko=ryzyko_wynajmow(model, wynajmy))
+    t = wynajmy[["id_kierowcy"]].assign(ryzyko=ryzyko_wynajmow(model, wynajmy),
+                                        ryzyko_stylu=ryzyko_stylu(model, wynajmy))
     kierowcy = t.groupby("id_kierowcy").agg(liczba_wynajmow=("ryzyko", "size"),
-                                            ryzyko=("ryzyko", "mean")).reset_index()
-    kierowcy["ocena"] = [ocena_z_ryzyka(r, srednie_ryzyko) for r in kierowcy["ryzyko"]]
+                                            ryzyko=("ryzyko", "mean"),
+                                            ryzyko_stylu=("ryzyko_stylu", "mean")).reset_index()
+    kierowcy["ocena"] = [ocena_z_ryzyka(r, model.srednie_ryzyko_stylu) for r in kierowcy["ryzyko_stylu"]]
     kierowcy["styl"] = kierowcy["ocena"].map(styl_jazdy)
     kierowcy["mnoznik"] = kierowcy["styl"].map(MNOZNIKI)
     return kierowcy
@@ -130,11 +138,10 @@ def wycena(stawka_bazowa: float, ocena: int | None, liczba_wynajmow: int = 0) ->
 
 def main():
     model = wczytaj_model()
-    srednie = ryzyko_floty()
     wynajmy = pd.read_csv(KATALOG_GLOWNY / "data" / "wynajmy.csv")
-    kierowcy = ocen_kierowcow(model, wynajmy, srednie)
+    kierowcy = ocen_kierowcow(model, wynajmy)
 
-    print(f"Średnie ryzyko floty: {srednie:.1%}")
+    print(f"Średnie ryzyko stylu we flocie: {model.srednie_ryzyko_stylu:.1%}")
     print(f"Ocena kierowców: mediana {kierowcy['ocena'].median():.0f}, "
           f"od {kierowcy['ocena'].min()} do {kierowcy['ocena'].max()}")
 

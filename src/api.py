@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from src.db import DEFAULT_DB_PATH, connect_database
 from src.model.scoring import (KATALOG_GLOWNY, PLIK_METRYK, MNOZNIKI, ocen_kierowcow,
-                               ocen_wynajmy, ryzyko_floty, wczytaj_model, wycena)
+                               ocen_wynajmy, wczytaj_model, wycena)
 
 KATALOG_PANELU = KATALOG_GLOWNY / "frontend"
 
@@ -44,7 +44,6 @@ async def przy_starcie(app: FastAPI):
     if not DEFAULT_DB_PATH.is_file():
         raise RuntimeError(f"Brak bazy {DEFAULT_DB_PATH}. Najpierw uruchom: python scripts/import_csv.py")
     stan["model"] = wczytaj_model()
-    stan["srednie_ryzyko"] = ryzyko_floty()
     stan["metryki"] = json.loads(PLIK_METRYK.read_text(encoding="utf-8"))
     yield
 
@@ -62,7 +61,7 @@ def wczytaj_wynajmy() -> pd.DataFrame:
 
 def ocen_kierowcow_ze_szkodami(wynajmy: pd.DataFrame) -> pd.DataFrame:
     """Oceny kierowców (scoring.py) uzupełnione o liczbę szkód z historii."""
-    kierowcy = ocen_kierowcow(stan["model"], wynajmy, stan["srednie_ryzyko"])
+    kierowcy = ocen_kierowcow(stan["model"], wynajmy)
     szkody = (wynajmy["uszkodzenie_samochodu"] == "tak").groupby(wynajmy["id_kierowcy"]).sum()
     return kierowcy.join(szkody.rename("liczba_szkod"), on="id_kierowcy")
 
@@ -70,7 +69,7 @@ def ocen_kierowcow_ze_szkodami(wynajmy: pd.DataFrame) -> pd.DataFrame:
 def kierowca_do_json(k) -> dict:
     return {"id_kierowcy": int(k["id_kierowcy"]), "liczba_wynajmow": int(k["liczba_wynajmow"]),
             "liczba_szkod": int(k["liczba_szkod"]), "ryzyko": round(float(k["ryzyko"]), 4),
-            "ocena": int(k["ocena"]), "styl": k["styl"], "mnoznik": float(k["mnoznik"])}
+            "ryzyko_stylu": round(float(k["ryzyko_stylu"]), 4), "ocena": int(k["ocena"]), "styl": k["styl"], "mnoznik": float(k["mnoznik"])}
 
 
 @app.get("/api/metryki")
@@ -83,7 +82,7 @@ def metryki():
 def podsumowanie():
     """Liczby do kafelków na stronie głównej panelu."""
     wynajmy = wczytaj_wynajmy()
-    kierowcy = ocen_kierowcow(stan["model"], wynajmy, stan["srednie_ryzyko"])
+    kierowcy = ocen_kierowcow(stan["model"], wynajmy)
     return {
         "liczba_kierowcow": int(len(kierowcy)),
         "liczba_wynajmow": int(len(wynajmy)),
@@ -108,7 +107,7 @@ def profil_kierowcy(id_kierowcy: int):
         raise HTTPException(status_code=404, detail=f"Nie ma kierowcy o id {id_kierowcy}.")
 
     profil = kierowca_do_json(ocen_kierowcow_ze_szkodami(wynajmy).iloc[0])
-    historia = ocen_wynajmy(stan["model"], wynajmy, stan["srednie_ryzyko"])
+    historia = ocen_wynajmy(stan["model"], wynajmy)
     profil["wynajmy"] = [{
         "id_wynajmu": int(w["id_wynajmu"]),
         "marka_i_model": w["marka_i_model"],
@@ -118,6 +117,7 @@ def profil_kierowcy(id_kierowcy: int):
         "km_razem": round(float(w["km_na_dzien"] * w["liczba_dni_wynajmu"]), 1),
         "uszkodzenie_samochodu": w["uszkodzenie_samochodu"],
         "ryzyko": round(float(w["ryzyko"]), 4),
+        "ryzyko_stylu": round(float(w["ryzyko_stylu"]), 4),
         "ocena": int(w["ocena"]),
     } for _, w in historia.iterrows()]
     return profil
@@ -136,7 +136,7 @@ def wycena_wynajmu(zapytanie: ZapytanieOWycene):
     ocena: Optional[int] = None
     liczba = 0
     if not wynajmy.empty:
-        k = ocen_kierowcow(stan["model"], wynajmy, stan["srednie_ryzyko"]).iloc[0]
+        k = ocen_kierowcow(stan["model"], wynajmy).iloc[0]
         ocena, liczba = int(k["ocena"]), int(k["liczba_wynajmow"])
     return {"id_kierowcy": zapytanie.id_kierowcy, **wycena(zapytanie.stawka_bazowa, ocena, liczba)}
 

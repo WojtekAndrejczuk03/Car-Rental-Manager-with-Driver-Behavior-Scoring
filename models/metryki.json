@@ -1,37 +1,56 @@
 {
   "model": "regresja logistyczna",
   "walidacja": "GroupKFold po kierowcy, 5 foldów",
+  "ocena_kierowcy": "z ryzyka samego stylu jazdy (kontekst wynajmu taki sam dla wszystkich)",
   "liczba_wynajmow": 3000,
   "liczba_kierowcow": 598,
   "odsetek_szkod": 0.0793,
+  "srednie_ryzyko_stylu": 0.0595,
   "baza_auc": 0.5873,
   "baza_auc_std": 0.039,
-  "model_auc": 0.7261,
-  "model_auc_std": 0.0395,
-  "przewaga_nad_baza": 0.1388,
-  "spearman_wynajmy": 0.6141,
-  "spearman_kierowcy": 0.8034,
+  "model_auc": 0.7311,
+  "model_auc_std": 0.0382,
+  "przewaga_nad_baza": 0.1438,
+  "spearman_wynajmy": 0.8265,
+  "spearman_kierowcy": 0.8946,
   "kryteria": {
     "model_auc >= 0.7": true,
     "przewaga_nad_baza >= 0.08": true,
     "spearman_kierowcy >= 0.7": true
   },
+  "analizy": {
+    "auc_baza_wzgledem_obszaru": 0.6572,
+    "auc_ryzyko_stylu": 0.6985,
+    "auc_tylko_kontekst": 0.6432,
+    "auc_sufit_prawdziwa_agresywnosc": 0.7588,
+    "spearman_kierowcy_ryzyko_wynajmu": 0.8395,
+    "wplyw_obszaru_na_ocene_pkt": {
+      "ocena_ze_stylu": {
+        "tylko_miasto": -0.0,
+        "tylko_autostrada": 0.3
+      },
+      "gdyby_ocena_z_ryzyka_wynajmu": {
+        "tylko_miasto": 13.4,
+        "tylko_autostrada": -5.6
+      }
+    }
+  },
   "wspolczynniki": {
-    "obszar_jazdy_autostrada": -1.8817,
-    "obszar_jazdy_miasto": 0.8881,
-    "typ_samochodu_sportowy": 0.6715,
-    "obszar_jazdy_trasa": 0.5979,
-    "stosunek_spalania": 0.573,
-    "log_km_razem": 0.5126,
-    "typ_samochodu_kombi": -0.5119,
-    "srednia_predkosc_kmh": 0.5043,
-    "najwyzsza_predkosc_kmh": 0.4841,
-    "obszar_jazdy_mieszany": 0.355,
-    "typ_samochodu_SUV": -0.2162,
-    "liczba_koni_mechanicznych": -0.2105,
-    "typ_samochodu_miejski": 0.1256,
-    "przyspieszenia_na_100km": 0.0759,
-    "typ_samochodu_offroad": -0.0653,
-    "typ_samochodu_osobowy": -0.0443
+    "typ_samochodu_sportowy": 0.6615,
+    "log_km_razem": 0.5206,
+    "typ_samochodu_kombi": -0.4973,
+    "stosunek_spalania_wzgl": 0.3761,
+    "liczba_koni_mechanicznych": -0.2396,
+    "obszar_jazdy_autostrada": -0.2277,
+    "srednia_predkosc_kmh_wzgl": 0.2248,
+    "przyspieszenia_na_100km_wzgl": 0.2,
+    "typ_samochodu_SUV": -0.1938,
+    "najwyzsza_predkosc_kmh_wzgl": 0.156,
+    "obszar_jazdy_miasto": 0.14,
+    "typ_samochodu_miejski": 0.1272,
+    "obszar_jazdy_trasa": 0.0785,
+    "typ_samochodu_offroad": -0.0679,
+    "typ_samochodu_osobowy": -0.0448,
+    "obszar_jazdy_mieszany": -0.0059
   }
 }
