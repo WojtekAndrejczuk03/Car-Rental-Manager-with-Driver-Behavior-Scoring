@@ -82,6 +82,20 @@ z API serwowanego przez FastAPI.
 - `GET /api/kierowcy` — oceny i style jazdy kierowców.
 - `GET /api/kierowcy/{id_kierowcy}` — profil kierowcy i historia wynajmów.
 - `POST /api/wycena` — wycena dla kierowcy i stawki bazowej.
+- `GET /api/samochody` — flota: dane aut, liczba wynajmów i szkód, średnia ocena kierowców.
+- `POST /api/import` — import wynajmów z pliku CSV (treść pliku w ciele zapytania,
+  kolumny jak w `data/wynajmy.csv`). W panelu: zakładka „Import CSV”.
+
+## Testy
+
+```bash
+python -m pip install -r requirements.txt
+python -m pytest
+```
+
+Testy sprawdzają skalę oceny, progi stylu jazdy, wycenę, endpointy API
+(na tymczasowej kopii bazy) oraz to, że obszar jazdy, przebieg i auto
+nie zmieniają oceny kierowcy.
 
 ## Ocena kierowcy zależy tylko od stylu jazdy
 

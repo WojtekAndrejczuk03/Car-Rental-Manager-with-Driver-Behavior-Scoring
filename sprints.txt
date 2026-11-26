@@ -80,3 +80,39 @@ Blokuje nas: nic
 Zobowiązanie zespołu na następne zajęcia: code freeze 26.11 – domknięcie zakresu
 minimalnego z karty (widok aut, import CSV w panelu, historia ocen kierowcy),
 robocza dokumentacja po polsku i po angielsku oraz gotowa prezentacja
+
+
+
+=== Sprint 26.11 ===
+
+Zobowiązanie z poprzednich zajęć: częściowo – zakres minimalny z karty
+domknięty, brak dokumentacji po angielsku
+
+
+
+[Błażej Kłoda]
+
+Zrobiłem/zrobiłam: ...
+
+Na następne zajęcia zrobię: ...
+
+
+
+[Wojciech Andrejczuk]
+
+Zrobiłem/zrobiłam:
+- Poprawiłem model po uwagach prowadzącego: ocena zależy tylko od stylu
+  jazdy, nie od obszaru (AUC 0,73, Spearman 0,89)
+- Dodałem widok floty i import CSV w panelu
+- Napisałem testy (36)
+
+Na następne zajęcia zrobię:
+- Wyjaśnienie ceny: które cechy jazdy najbardziej podniosły lub obniżyły ocenę
+- README po angielsku
+- Porównanie kilku modeli (dalsze kroki)
+
+
+
+Blokuje nas: nic
+
+Zobowiązanie zespołu na następne zajęcia: prezentacja projektu

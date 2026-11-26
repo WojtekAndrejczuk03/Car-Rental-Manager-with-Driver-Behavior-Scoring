@@ -6,6 +6,7 @@ import csv
 import math
 import sys
 from pathlib import Path
+from typing import TextIO
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -31,6 +32,7 @@ EXPECTED_COLUMNS = (
     "liczba_dni_wynajmu",
     "uszkodzenie_samochodu",
 )
+DRIVING_AREAS = ("miasto", "trasa", "autostrada", "mieszany")
 
 INSERT_CAR = """
 INSERT INTO samochody (
@@ -146,6 +148,13 @@ def _import_row(connection, row: dict[str, str], line_number: int) -> None:
             f"Wiersz {line_number}: uszkodzenie_samochodu musi mieć wartość 'tak' lub 'nie'."
         )
 
+    area = row["obszar_jazdy"].strip()
+    if area not in DRIVING_AREAS:
+        raise ValueError(
+            f"Wiersz {line_number}: obszar_jazdy musi mieć jedną z wartości: "
+            f"{', '.join(DRIVING_AREAS)}."
+        )
+
     connection.execute(
         UPSERT_RENTAL,
         (
@@ -156,7 +165,7 @@ def _import_row(connection, row: dict[str, str], line_number: int) -> None:
             _integer(row, "liczba_gwaltownych_przyspieszen", line_number),
             _number(row, "srednia_predkosc_kmh", line_number),
             _number(row, "najwyzsza_predkosc_kmh", line_number),
-            row["obszar_jazdy"].strip(),
+            area,
             _number(row, "km_na_dzien", line_number),
             _integer(row, "liczba_dni_wynajmu", line_number),
             damage,
@@ -164,34 +173,45 @@ def _import_row(connection, row: dict[str, str], line_number: int) -> None:
     )
 
 
-def import_csv(csv_path: Path, db_path: Path) -> int:
-    """Validate and import a CSV file atomically; return its rental row count."""
+def import_csv_file(csv_file: TextIO, db_path: Path) -> int:
+    """Validate and import an open CSV file atomically; return its rental row count.
+
+    Used by this script and by the API (POST /api/import). If any row is
+    invalid, nothing from the file is saved.
+    """
     connection = connect_database(db_path)
     try:
         initialize_database(connection)
-        with csv_path.open("r", encoding="utf-8-sig", newline="") as csv_file:
-            reader = csv.DictReader(csv_file)
-            if reader.fieldnames is None:
-                raise ValueError("Plik CSV jest pusty albo nie zawiera nagłówka.")
-            if len(reader.fieldnames) != len(set(reader.fieldnames)):
-                raise ValueError("Nagłówek CSV zawiera powtórzone nazwy kolumn.")
+        reader = csv.DictReader(csv_file)
+        if reader.fieldnames is None:
+            raise ValueError("Plik CSV jest pusty albo nie zawiera nagłówka.")
+        if len(reader.fieldnames) != len(set(reader.fieldnames)):
+            raise ValueError("Nagłówek CSV zawiera powtórzone nazwy kolumn.")
 
-            missing = set(EXPECTED_COLUMNS) - set(reader.fieldnames)
-            extra = set(reader.fieldnames) - set(EXPECTED_COLUMNS)
-            if missing or extra:
-                raise ValueError(
-                    "Nieprawidłowe kolumny CSV. "
-                    f"Brakujące: {sorted(missing)}; nieoczekiwane: {sorted(extra)}."
-                )
+        missing = set(EXPECTED_COLUMNS) - set(reader.fieldnames)
+        extra = set(reader.fieldnames) - set(EXPECTED_COLUMNS)
+        if missing or extra:
+            raise ValueError(
+                "Nieprawidłowe kolumny CSV. "
+                f"Brakujące: {sorted(missing)}; nieoczekiwane: {sorted(extra)}."
+            )
 
-            imported_rows = 0
-            with connection:
-                for row in reader:
-                    _import_row(connection, row, reader.line_num)
-                    imported_rows += 1
-            return imported_rows
+        imported_rows = 0
+        with connection:
+            for row in reader:
+                _import_row(connection, row, reader.line_num)
+                imported_rows += 1
+        if imported_rows == 0:
+            raise ValueError("Plik CSV nie zawiera żadnych wynajmów.")
+        return imported_rows
     finally:
         connection.close()
+
+
+def import_csv(csv_path: Path, db_path: Path) -> int:
+    """Validate and import a CSV file atomically; return its rental row count."""
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as csv_file:
+        return import_csv_file(csv_file, db_path)
 
 
 def main() -> None:

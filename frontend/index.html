@@ -925,6 +925,64 @@
         font-weight: 700;
       }
 
+      .primary-button {
+        border: 0;
+        border-radius: 8px;
+        background: var(--green);
+        padding: 9px 16px;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .primary-button:hover {
+        background: var(--green-dark);
+      }
+
+      .primary-button:disabled {
+        background: #b7c2bc;
+        cursor: not-allowed;
+      }
+
+      .import-body {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+        color: #4a5750;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .import-body p {
+        margin: 0;
+      }
+
+      .import-body code {
+        border-radius: 4px;
+        background: #f2f4f2;
+        padding: 1px 4px;
+        font-size: 10px;
+      }
+
+      .import-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .import-success {
+        border: 1px solid #cfe5d8;
+        border-radius: 10px;
+        background: var(--green-pale);
+        padding: 12px 14px;
+        color: var(--green-dark);
+      }
+
+      tbody tr.static-row {
+        cursor: default;
+      }
+
       .empty-state {
         padding: 27px 15px;
         color: var(--muted);
@@ -1127,7 +1185,7 @@
             <div class="help-card">
               <strong>Potrzebujesz pomocy?</strong>
               <p>Dowiedz się, jak działa ocena stylu jazdy.</p>
-              <a href="#about-scoring">Poznaj system ocen →</a>
+              <a href="#about-scoring" @click="selectPage('Przegląd')">Poznaj system ocen →</a>
             </div>
             <div class="user-card">
               <div class="avatar">AK</div>
@@ -1172,9 +1230,7 @@
               <div>
                 <p class="eyebrow">Panel zarządcy</p>
                 <h1>{{ pageTitle }}</h1>
-                <p class="page-subtitle">
-                  Przegląd floty, wynajmów i ocen stylu jazdy kierowców.
-                </p>
+                <p class="page-subtitle">{{ pageSubtitle }}</p>
               </div>
               <span class="date-control">● &nbsp; Dane z aktualnej bazy</span>
             </section>
@@ -1186,6 +1242,7 @@
               {{ apiError }}
             </div>
 
+            <template v-if="activePage === 'Przegląd'">
             <section class="stats-grid" aria-label="Podsumowanie wypożyczalni">
               <article class="stat-card">
                 <div class="stat-top">
@@ -1425,6 +1482,101 @@
                 </template>
               </aside>
             </section>
+            </template>
+
+            <section v-else-if="activePage === 'Flota'" class="panel" aria-label="Flota">
+              <div class="panel-header">
+                <div>
+                  <h2>Samochody we flocie</h2>
+                  <p>Dane katalogowe, liczba wynajmów i szkód oraz średnia ocena stylu jazdy kierowców danego auta.</p>
+                </div>
+              </div>
+              <div v-if="carsLoading" class="empty-state" role="status">Pobieranie floty z API...</div>
+              <div v-else-if="carsError" class="api-message" role="alert" style="margin: 16px">{{ carsError }}</div>
+              <div v-else class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Samochód</th>
+                      <th>Typ</th>
+                      <th>Klasa</th>
+                      <th>Moc</th>
+                      <th>Spalanie katalogowe</th>
+                      <th>Wynajmy</th>
+                      <th>Szkody</th>
+                      <th>Śr. ocena kierowców</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="car in cars" :key="car.id_samochodu" class="static-row">
+                      <td><span class="driver-name">{{ car.marka_i_model }}</span></td>
+                      <td>{{ car.typ_samochodu }}</td>
+                      <td>{{ car.klasa_pojazdu }}</td>
+                      <td>{{ car.liczba_koni_mechanicznych }} KM</td>
+                      <td>{{ formatNumber(car.spalanie_producenta_l_100km) }} l/100 km</td>
+                      <td>{{ car.liczba_wynajmow }}</td>
+                      <td>
+                        {{ car.liczba_szkod }}
+                        <span v-if="car.odsetek_szkod !== null" style="color: #9aa39e">({{ formatPercent(car.odsetek_szkod) }})</span>
+                      </td>
+                      <td>
+                        <template v-if="car.srednia_ocena !== null">
+                          <span class="score">{{ car.srednia_ocena }}</span><span style="color: #9aa39e">/100</span>
+                        </template>
+                        <template v-else>—</template>
+                      </td>
+                    </tr>
+                    <tr v-if="cars.length === 0" class="static-row">
+                      <td colspan="8" class="empty-state">
+                        <strong>Brak samochodów w bazie</strong>
+                        Zaimportuj wynajmy z pliku CSV.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-footer">
+                <span>{{ cars.length }} samochodów</span>
+                <span>Ocena kierowcy zależy od stylu jazdy, nie od auta</span>
+              </div>
+            </section>
+
+            <section v-else-if="activePage === 'Import CSV'" class="panel" aria-label="Import wynajmów z CSV">
+              <div class="panel-header">
+                <div>
+                  <h2>Import wynajmów z pliku CSV</h2>
+                  <p>Nowe wynajmy od razu wpływają na oceny kierowców i wyceny.</p>
+                </div>
+              </div>
+              <div class="import-body">
+                <p>
+                  Plik musi mieć te same kolumny co <code>data/wynajmy.csv</code>
+                  (kodowanie UTF-8, separator przecinek). Wynajem o istniejącym
+                  <code>id_wynajmu</code> zostanie nadpisany. Jeśli którykolwiek wiersz jest
+                  błędny, nic z pliku nie zostanie zapisane.
+                </p>
+                <div class="import-actions">
+                  <input
+                    ref="csvInput"
+                    type="file"
+                    accept=".csv,text/csv"
+                    aria-label="Plik CSV z wynajmami"
+                    @change="onCsvSelected"
+                  />
+                  <button
+                    class="primary-button"
+                    type="button"
+                    :disabled="!importFile || importing"
+                    @click="importCsv"
+                  >{{ importing ? "Importowanie..." : "Importuj" }}</button>
+                </div>
+                <div v-if="importResult" class="import-success" role="status">
+                  Zaimportowano {{ importResult.zaimportowano }} wynajmów.
+                  W bazie jest teraz {{ importResult.liczba_wynajmow }} wynajmów.
+                </div>
+                <div v-if="importError" class="api-message" role="alert" style="margin: 0">{{ importError }}</div>
+              </div>
+            </section>
           </div>
         </main>
       </div>
@@ -1454,6 +1606,14 @@
             toastMessage: "",
             toastTimeout: null,
             detailRequestId: 0,
+            cars: [],
+            carsLoaded: false,
+            carsLoading: false,
+            carsError: "",
+            importFile: null,
+            importing: false,
+            importResult: null,
+            importError: "",
           };
         },
         computed: {
@@ -1470,7 +1630,12 @@
                 icon: "▣",
                 count: this.summary ? this.summary.liczba_wynajmow : null,
               },
-              { label: "Flota", icon: "▰" },
+              {
+                label: "Flota",
+                icon: "▰",
+                count: this.carsLoaded ? this.cars.length : null,
+              },
+              { label: "Import CSV", icon: "⇪" },
               { label: "Raporty", icon: "▤" },
             ];
           },
@@ -1488,6 +1653,14 @@
             return this.activePage === "Przegląd"
               ? "Przegląd wypożyczalni"
               : this.activePage;
+          },
+          pageSubtitle() {
+            const subtitles = {
+              Przegląd: "Przegląd floty, wynajmów i ocen stylu jazdy kierowców.",
+              Flota: "Samochody w bazie i to, jak są użytkowane.",
+              "Import CSV": "Dodawanie danych o jeździe z nowych wynajmów.",
+            };
+            return subtitles[this.activePage];
           },
         },
         mounted() {
@@ -1577,9 +1750,55 @@
             }
           },
           selectPage(page) {
-            this.activePage = page;
-            if (page !== "Przegląd") {
+            if (!["Przegląd", "Flota", "Import CSV"].includes(page)) {
               this.showToast(`Widok „${page}” nie jest jeszcze dostępny.`);
+              return;
+            }
+            this.activePage = page;
+            if (page === "Flota" && !this.carsLoaded) {
+              this.loadCars();
+            }
+          },
+          async loadCars() {
+            this.carsLoading = true;
+            this.carsError = "";
+            try {
+              this.cars = await this.fetchJson("/api/samochody");
+              this.carsLoaded = true;
+            } catch (error) {
+              this.carsError = error.message;
+            } finally {
+              this.carsLoading = false;
+            }
+          },
+          onCsvSelected(event) {
+            this.importFile = event.target.files[0] || null;
+            this.importResult = null;
+            this.importError = "";
+          },
+          async importCsv() {
+            if (!this.importFile) {
+              return;
+            }
+            this.importing = true;
+            this.importResult = null;
+            this.importError = "";
+            try {
+              this.importResult = await this.fetchJson("/api/import", {
+                method: "POST",
+                headers: { "Content-Type": "text/csv" },
+                body: this.importFile,
+              });
+              this.importFile = null;
+              this.$refs.csvInput.value = "";
+              // Nowe wynajmy zmieniają oceny, więc odświeżamy kierowców i flotę
+              this.carsLoaded = false;
+              await this.loadDashboard();
+              await this.loadCars();
+            } catch (error) {
+              this.importError = error.message;
+            } finally {
+              this.importing = false;
             }
           },
           formatPercent(value) {
@@ -1612,6 +1831,9 @@
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}×`;
+          },
+          formatNumber(value) {
+            return value.toLocaleString("pl-PL", { maximumFractionDigits: 1 });
           },
           formatDistance(value) {
             return `${value.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} km`;
